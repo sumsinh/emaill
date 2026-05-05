@@ -10,9 +10,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ LOCAL BACKEND
-  // const API_URL = "http://127.0.0.1:8000";
-
   // const API_URL = "https://emaill-dmpo.onrender.com";
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -64,7 +61,7 @@ function App() {
         body: JSON.stringify(payload),
       });
 
-      // ✅ handle bad responses safely
+   
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || "Request failed");
@@ -102,7 +99,6 @@ function App() {
           Your Leadership Report
         </h2>
 
-        {/* Scores */}
         <div className="space-y-4">
           {Object.entries(result.scores).map(([dimension, score]) => (
             <div key={dimension} className="border p-3 rounded-md">
@@ -128,7 +124,6 @@ function App() {
           ))}
         </div>
 
-        {/* Confirmation */}
         <div className="mt-6 p-3 bg-green-50 border border-green-200 rounded-md">
           <p className="text-sm text-green-700">
             ✅ Your report has been emailed successfully.

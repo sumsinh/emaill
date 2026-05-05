@@ -16,8 +16,6 @@ def submit_assessment(request):
 
         data = json.loads(request.body or "{}")
 
-        print("DATA RECEIVED:", data)
-
         name = data.get("name")
         email = data.get("email")
         scores = data.get("scores")
@@ -33,13 +31,13 @@ def submit_assessment(request):
 
         html_message = f"""
         <h2>Hi {name},</h2>
-        <p>Here is your Leadership Assessment Result:</p>
+        <p>Your Leadership Assessment Result:</p>
 
         <h3>Scores</h3>
         <ul>
-            <li><b>Decision:</b> {scores.get('decision')}</li>
-            <li><b>Communication:</b> {scores.get('communication')}</li>
-            <li><b>Strategy:</b> {scores.get('strategy')}</li>
+            <li>Decision: {scores.get('decision')}</li>
+            <li>Communication: {scores.get('communication')}</li>
+            <li>Strategy: {scores.get('strategy')}</li>
         </ul>
 
         <h3>Feedback</h3>
@@ -48,32 +46,25 @@ def submit_assessment(request):
             <li>{feedback.get('communication')}</li>
             <li>{feedback.get('strategy')}</li>
         </ul>
-
-        <p>Thank you for taking the assessment.</p>
         """
+
+        response = JsonResponse({"success": True})
 
         try:
             resend.api_key = settings.RESEND_API_KEY
-
             resend.Emails.send({
                 "from": "onboarding@resend.dev",
                 "to": [email],
                 "subject": subject,
                 "html": html_message,
             })
+        except Exception:
+            pass
 
-            print("EMAIL SENT SUCCESSFULLY")
-
-        except Exception as email_error:
-            print("EMAIL ERROR:", str(email_error))
-
-        return JsonResponse({
-            "success": True
-        })
+        return response
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     except Exception as e:
-        print("ERROR:", str(e))
         return JsonResponse({"error": str(e)}, status=500)
