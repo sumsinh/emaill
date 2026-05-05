@@ -11,8 +11,10 @@ function App() {
   const [error, setError] = useState("");
 
   // ✅ LOCAL BACKEND
-  const API_URL = "http://127.0.0.1:8000";
+  // const API_URL = "http://127.0.0.1:8000";
 
+  const API_URL = "https://emaill-dmpo.onrender.com";
+  
   function handleAnswer(q, value) {
     setAnswers((prev) => [
       ...prev.filter((a) => a.id !== q.id),

@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://your-app.vercel.app",
+    "https://emaill-two.vercel.app/",
 ]
 
 # Application definition
