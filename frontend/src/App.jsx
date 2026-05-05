@@ -47,6 +47,7 @@ function App() {
 
     try {
       setLoading(true);
+      console.log(payload);
 
       const res = await fetch(`${API_URL}/api/submit/`, {
         method: "POST",
