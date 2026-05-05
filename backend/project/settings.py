@@ -38,6 +38,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://emaill-two.vercel.app/",
 ]
 
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 # Application definition
 
 INSTALLED_APPS = [

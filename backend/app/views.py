@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 import json
+import resend
 
 
 @csrf_exempt
@@ -32,45 +32,48 @@ def submit_assessment(request):
 
         subject = "Your Leadership Assessment Result"
 
-        message = f"""
-Hi {name},
+        # ✅ HTML email (better looking)
+        html_message = f"""
+        <h2>Hi {name},</h2>
+        <p>Here is your Leadership Assessment Result:</p>
 
-Here is your Leadership Assessment Result:
+        <h3>Scores</h3>
+        <ul>
+            <li><b>Decision:</b> {scores.get('decision')}</li>
+            <li><b>Communication:</b> {scores.get('communication')}</li>
+            <li><b>Strategy:</b> {scores.get('strategy')}</li>
+        </ul>
 
-Scores:
-Decision: {scores.get('decision')}
-Communication: {scores.get('communication')}
-Strategy: {scores.get('strategy')}
+        <h3>Feedback</h3>
+        <ul>
+            <li>{feedback.get('decision')}</li>
+            <li>{feedback.get('communication')}</li>
+            <li>{feedback.get('strategy')}</li>
+        </ul>
 
-Feedback:
-Decision: {feedback.get('decision')}
-Communication: {feedback.get('communication')}
-Strategy: {feedback.get('strategy')}
+        <p>Thank you for taking the assessment.</p>
+        """
 
-Thank you for taking the assessment.
-"""
-
-        email_msg = EmailMultiAlternatives(
-            subject=subject,
-            body=message,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[email],
-        )
-
-        # 🔥 IMPORTANT FIX (no crash if email fails)
+        # 🔥 RESEND EMAIL (works on Render)
         try:
-            email_msg.send()
+            resend.api_key = settings.RESEND_API_KEY
+
+            resend.Emails.send({
+                "from": "onboarding@resend.dev",
+                "to": [email],
+                "subject": subject,
+                "html": html_message,
+            })
+
             print("EMAIL SENT SUCCESSFULLY")
-            return JsonResponse({"success": True})
 
         except Exception as email_error:
             print("EMAIL ERROR:", str(email_error))
 
-            # still return success so frontend works
-            return JsonResponse({
-                "success": True,
-                "warning": "Email failed but result generated"
-            })
+        # ✅ ALWAYS return success (important)
+        return JsonResponse({
+            "success": True
+        })
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
