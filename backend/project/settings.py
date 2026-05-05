@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "leadershipbackend.onrender.com",
+    "emaill-dmpo.onrender.com",
     "localhost",
     "127.0.0.1"
 ]
