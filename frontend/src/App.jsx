@@ -10,7 +10,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   function handleAnswer(q, value) {
     setAnswers((prev) => [
@@ -40,8 +40,9 @@ function App() {
     const payload = {
       name,
       email,
-      answers,
-      ...data,
+      scores: data.scores,
+      bands: data.bands,
+      feedback: data.feedback,
     };
 
     try {
@@ -55,11 +56,11 @@ function App() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        throw new Error("Request failed");
-      }
-
       const response = await res.json();
+
+      if (!res.ok) {
+        throw new Error(response.error || "Request failed");
+      }
 
       if (response.success) {
         setResult(data);
@@ -67,7 +68,8 @@ function App() {
         setError(response.error || "Something went wrong");
       }
     } catch (err) {
-      setError("Server error. Please try again.");
+      console.log(err);
+      setError(err.message || "Server error");
     } finally {
       setLoading(false);
     }
@@ -97,7 +99,7 @@ function App() {
           ))}
 
           <p className="text-sm text-blue-600 mt-4">
-            Your report has been sent to your email.
+            Check your email for the detailed report.
           </p>
 
         </div>
