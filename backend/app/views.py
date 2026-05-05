@@ -10,7 +10,11 @@ def submit_assessment(request):
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
     try:
-        data = json.loads(request.body.decode("utf-8"))
+        if not request.body:
+            return JsonResponse({"error": "Empty body"}, status=400)
+
+        data = json.loads(request.body or "{}")
+
         print("DATA RECEIVED:", data)
 
         name = data.get("name")
@@ -51,6 +55,9 @@ Strategy: {feedback.get('strategy')}
 
         return JsonResponse({"success": True})
 
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
     except Exception as e:
         print("ERROR:", str(e))
-        return JsonResponse({"error": str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=500)
