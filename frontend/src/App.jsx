@@ -1,188 +1,148 @@
 import { useState } from "react";
-import questions from "./data/questions";
-import { calculateScores } from "./utils/scoring";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [answers, setAnswers] = useState([]);
-  const [result, setResult] = useState(null);
+  const [answers, setAnswers] = useState(Array(9).fill(0));
+  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const handleChange = (index, value) => {
+    const updated = [...answers];
+    updated[index] = value;
+    setAnswers(updated);
+  };
 
-  function handleAnswer(q, value) {
-    setAnswers((prev) => [
-      ...prev.filter((a) => a.id !== q.id),
-      { id: q.id, dimension: q.dimension, value },
-    ]);
-  }
+  const calculateResults = () => {
+    const decision = answers.slice(0, 3).reduce((a, b) => a + b, 0);
+    const communication = answers.slice(3, 6).reduce((a, b) => a + b, 0);
+    const strategy = answers.slice(6, 9).reduce((a, b) => a + b, 0);
 
-  function getSelectedValue(questionId) {
-    const found = answers.find((a) => a.id === questionId);
-    return found ? found.value : null;
-  }
+    const getBand = (score) => {
+      if (score <= 7) return "Low";
+      if (score <= 11) return "Medium";
+      return "High";
+    };
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+    return {
+      scores: {
+        decision,
+        communication,
+        strategy,
+      },
+      feedback: {
+        decision: getBand(decision),
+        communication: getBand(communication),
+        strategy: getBand(strategy),
+      },
+    };
+  };
 
-    const uniqueAnswers = new Set(answers.map((a) => a.id));
-
-    if (!name || !email || uniqueAnswers.size !== 9) {
-      setError("Please fill all fields and answer all questions");
+  const handleSubmit = async () => {
+    if (!name || !email) {
+      alert("Name and Email required");
       return;
     }
 
-    const data = calculateScores(answers);
+    const result = calculateResults();
 
-    const payload = {
+    const data = {
       name,
       email,
-      scores: data.scores,
-      bands: data.bands,
-      feedback: data.feedback,
+      scores: result.scores,
+      feedback: result.feedback,
     };
+
+    console.log("Sending:", data);
 
     try {
       setLoading(true);
-      console.log(payload);
 
       const res = await fetch(`${API_URL}/api/submit/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
 
-      const response = await res.json();
+      const responseData = await res.json();
+      console.log("Response:", responseData);
 
-      if (!res.ok) {
-        throw new Error(response.error || "Request failed");
-      }
-
-      if (response.success) {
-        setResult(data);
+      if (responseData.success) {
+        setSubmitted(true);
       } else {
-        setError(response.error || "Something went wrong");
+        alert("Error: " + responseData.error);
       }
     } catch (err) {
-      console.log(err);
-      setError(err.message || "Server error");
+      console.error(err);
+      alert("Something went wrong");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  if (result) {
+  if (submitted) {
     return (
-      <div className="min-h-screen bg-blue-50 flex justify-center items-center px-4">
-        <div className="w-full max-w-md bg-white border border-blue-100 rounded-lg p-6">
-
-          <h2 className="text-lg font-semibold text-blue-700 mb-4">
-            Your Results
-          </h2>
-
-          {["decision", "communication", "strategy"].map((key) => (
-            <div key={key} className="mb-4">
-              <p className="text-sm font-medium capitalize text-gray-700">
-                {key}
-              </p>
-              <p className="text-sm text-gray-600">
-                Score: {result.scores[key]} ({result.bands[key]})
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {result.feedback[key]}
-              </p>
-            </div>
-          ))}
-
-          <p className="text-sm text-blue-600 mt-4">
-            Check your email for the detailed report.
-          </p>
-
-        </div>
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <h2 style={{ color: "#2563eb" }}>Check your email</h2>
+        <p>Your assessment result has been sent.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 py-10 px-4 flex justify-center">
-      <div className="w-full max-w-2xl">
+    <div style={{ padding: "40px", maxWidth: "600px", margin: "auto" }}>
+      <h2 style={{ color: "#2563eb" }}>Leadership Assessment</h2>
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-blue-700">
-            Leadership Assessment
-          </h1>
-          <p className="text-blue-500 text-sm mt-1">
-            Answer a few quick questions.
-          </p>
-        </div>
+      <input
+        type="text"
+        placeholder="Your Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        style={{ display: "block", marginBottom: "10px", width: "100%" }}
+      />
 
-        <div className="bg-white border border-blue-100 rounded-lg p-5 mb-6">
-          <div className="flex flex-col gap-3">
-            <input
-              className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+      <input
+        type="email"
+        placeholder="Your Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        style={{ display: "block", marginBottom: "20px", width: "100%" }}
+      />
 
-            <input
-              className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-              placeholder="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="bg-white border border-blue-100 rounded-lg p-5">
-          {questions.map((q) => (
-            <div key={q.id} className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-3">
-                {q.text}
-              </p>
-
-              <div className="flex gap-3">
-                {[1, 2, 3, 4, 5].map((v) => {
-                  const selected = getSelectedValue(q.id) === v;
-
-                  return (
-                    <button
-                      type="button"
-                      key={v}
-                      onClick={() => handleAnswer(q, v)}
-                      className={`w-10 h-10 flex items-center justify-center text-sm rounded-full border transition
-                        ${
-                          selected
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-blue-600 border-blue-300 hover:bg-blue-100"
-                        }`}
-                    >
-                      {v}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+      {answers.map((_, i) => (
+        <div key={i} style={{ marginBottom: "15px" }}>
+          <p>Question {i + 1}</p>
+          {[1, 2, 3, 4, 5].map((val) => (
+            <label key={val} style={{ marginRight: "10px" }}>
+              <input
+                type="radio"
+                name={`q-${i}`}
+                value={val}
+                onChange={() => handleChange(i, val)}
+              />
+              {val}
+            </label>
           ))}
+        </div>
+      ))}
 
-          {error && (
-            <p className="text-sm text-red-500 mb-3">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm hover:bg-blue-700 transition"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Get results"}
-          </button>
-        </form>
-      </div>
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        style={{
+          backgroundColor: "#2563eb",
+          color: "white",
+          padding: "10px 20px",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        {loading ? "Submitting..." : "Get My Result"}
+      </button>
     </div>
   );
 }
