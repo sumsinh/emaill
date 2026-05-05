@@ -10,7 +10,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  // ✅ LOCAL BACKEND
+  const API_URL = "http://127.0.0.1:8000";
 
   function handleAnswer(q, value) {
     setAnswers((prev) => [
@@ -37,14 +38,17 @@ function App() {
 
     const data = calculateScores(answers);
 
+    if (!data.scores || !data.feedback) {
+      setError("Calculation failed");
+      return;
+    }
+
     const payload = {
       name,
       email,
       scores: data.scores,
       feedback: data.feedback,
     };
-
-    console.log("Sending:", payload);
 
     try {
       setLoading(true);
@@ -57,23 +61,20 @@ function App() {
         body: JSON.stringify(payload),
       });
 
-      let responseData;
-
-      try {
-        responseData = await res.json();
-      } catch {
-        throw new Error("Server returned invalid response");
-      }
-
+      // ✅ handle bad responses safely
       if (!res.ok) {
-        throw new Error(responseData.error || "Request failed");
+        const text = await res.text();
+        throw new Error(text || "Request failed");
       }
 
-      if (responseData.success) {
+      const response = await res.json();
+
+      if (response.success) {
         setResult(data);
       } else {
-        setError(responseData.error || "Something went wrong");
+        setError(response.error || "Something went wrong");
       }
+
     } catch (err) {
       console.error(err);
       setError(err.message || "Server error");
@@ -83,21 +84,58 @@ function App() {
   }
 
   if (result) {
-    return (
-      <div className="min-h-screen bg-blue-50 flex justify-center items-center px-4">
-        <div className="w-full max-w-md bg-white border border-blue-100 rounded-lg p-6">
+    if (result) {
+  const getBand = (score) => {
+    if (score <= 2) return "Low";
+    if (score <= 4) return "Medium";
+    return "High";
+  };
 
-          <h2 className="text-lg font-semibold text-blue-700 mb-4">
-            Check your email
-          </h2>
+  return (
+    <div className="min-h-screen bg-blue-50 flex justify-center items-center px-4">
+      <div className="w-full max-w-lg bg-white border border-blue-100 rounded-lg p-6">
 
-          <p className="text-sm text-gray-600">
-            Your result has been sent successfully.
-          </p>
+        <h2 className="text-xl font-semibold text-blue-700 mb-4">
+          Your Leadership Report
+        </h2>
 
+        {/* Scores */}
+        <div className="space-y-4">
+          {Object.entries(result.scores).map(([dimension, score]) => (
+            <div key={dimension} className="border p-3 rounded-md">
+              <p className="text-sm font-semibold text-gray-700">
+                {dimension}
+              </p>
+
+              <p className="text-sm text-gray-600">
+                Score: {score}
+              </p>
+
+              <p className="text-sm">
+                Band:{" "}
+                <span className="font-medium text-blue-600">
+                  {getBand(score)}
+                </span>
+              </p>
+
+              <p className="text-sm text-gray-500 mt-1">
+                {result.feedback[dimension]}
+              </p>
+            </div>
+          ))}
         </div>
+
+        {/* Confirmation */}
+        <div className="mt-6 p-3 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-sm text-green-700">
+            ✅ Your report has been emailed successfully.
+          </p>
+        </div>
+
       </div>
-    );
+    </div>
+  );
+}
   }
 
   return (
@@ -108,27 +146,22 @@ function App() {
           <h1 className="text-2xl font-semibold text-blue-700">
             Leadership Assessment
           </h1>
-          <p className="text-blue-500 text-sm mt-1">
-            Answer a few quick questions.
-          </p>
         </div>
 
         <div className="bg-white border border-blue-100 rounded-lg p-5 mb-6">
-          <div className="flex flex-col gap-3">
-            <input
-              className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <input
+            className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm mb-3"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-            <input
-              className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm"
-              placeholder="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <input
+            className="w-full border border-blue-200 rounded-md px-3 py-2 text-sm"
+            placeholder="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-blue-100 rounded-lg p-5">
@@ -171,7 +204,7 @@ function App() {
             className="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm"
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Get my result"}
+            {loading ? "Submitting..." : "Get results"}
           </button>
         </form>
       </div>
