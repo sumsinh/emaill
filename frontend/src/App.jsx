@@ -13,8 +13,9 @@ function App() {
   // ✅ LOCAL BACKEND
   // const API_URL = "http://127.0.0.1:8000";
 
-  const API_URL = "https://emaill-dmpo.onrender.com";
-  
+  // const API_URL = "https://emaill-dmpo.onrender.com";
+  const API_URL = import.meta.env.VITE_API_URL;
+
   function handleAnswer(q, value) {
     setAnswers((prev) => [
       ...prev.filter((a) => a.id !== q.id),
