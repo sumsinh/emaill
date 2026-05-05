@@ -41,6 +41,14 @@ It is a small full-stack web application where users complete a 9-question leade
 
 ---
 
+## Email Delivery
+
+Email functionality is implemented using Resend.
+
+Note: In development (sandbox mode), Resend restricts sending emails to unverified recipients. This is why emails may only be received on the registered account.
+
+In a production environment, I would verify a custom domain to enable sending emails to all users.
+
 ## How It Works
 
 1. User fills out the form and submits responses.
