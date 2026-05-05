@@ -23,7 +23,6 @@ def submit_assessment(request):
         scores = data.get("scores")
         feedback = data.get("feedback")
 
-        # ✅ validation
         if not name or not email:
             return JsonResponse({"error": "Name or Email missing"}, status=400)
 
@@ -32,7 +31,6 @@ def submit_assessment(request):
 
         subject = "Your Leadership Assessment Result"
 
-        # ✅ HTML email (better looking)
         html_message = f"""
         <h2>Hi {name},</h2>
         <p>Here is your Leadership Assessment Result:</p>
@@ -54,7 +52,6 @@ def submit_assessment(request):
         <p>Thank you for taking the assessment.</p>
         """
 
-        # 🔥 RESEND EMAIL (works on Render)
         try:
             resend.api_key = settings.RESEND_API_KEY
 
@@ -70,7 +67,6 @@ def submit_assessment(request):
         except Exception as email_error:
             print("EMAIL ERROR:", str(email_error))
 
-        # ✅ ALWAYS return success (important)
         return JsonResponse({
             "success": True
         })
